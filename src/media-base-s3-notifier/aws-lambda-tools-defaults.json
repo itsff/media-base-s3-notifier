@@ -1,9 +1,9 @@
 {
     "profile" : "default",
-    "region" : "us-east-2",
+    "region" : "us-east-1",
     "configuration" : "Release",
     "function-runtime":"dotnet6",
-    "function-memory-size" : 32,
+    "function-memory-size" : 128,
     "function-timeout" : 30,
     "function-handler" : "media-base-s3-notifier::MediaBase.S3Notifier::FunctionHandler"
 }
