@@ -10,8 +10,6 @@ namespace MediaBase
     public class AzureBusSender : IBusSender
     {
         readonly MessageSender _client;
-        readonly ILambdaSerializer _serializer;
-        readonly byte[] _buffer;
         
         public static AzureBusSender CreateFromEnv ()
         {
@@ -26,8 +24,6 @@ namespace MediaBase
         public AzureBusSender (string connectionString, string topicName)
         {
             _client = new MessageSender(connectionString, topicName);
-            _serializer = new Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer();
-            _buffer = new byte[512];
         }
 
 
@@ -43,21 +39,15 @@ namespace MediaBase
 
             foreach (var m in msgs)
             {
-                Array.Fill(_buffer, (byte)0);
-                using (var stream = new System.IO.MemoryStream(_buffer))
-                {
-                    _serializer.Serialize(m, stream);
-                    stream.Flush();
-                    stream.Close();
+                var bytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(m);
 
-                    var byteMsg = new Message(stream.ToArray());
-                    byteMsg.ContentType = "application/json";
-                    byteMsg.MessageId = m.Id;
-                    byteMsg.Label = "S3 File";
-                    result.Add(byteMsg);
+                var byteMsg = new Message(bytes);
+                byteMsg.ContentType = "application/json";
+                byteMsg.MessageId = m.Id;
+                byteMsg.Label = "S3 File";
+                result.Add(byteMsg);
 
-                    logger.LogLine($"serialized: {byteMsg.MessageId}");
-                }
+                logger.LogLine($"serialized: {byteMsg.MessageId}");
             }
             return result;
         }
